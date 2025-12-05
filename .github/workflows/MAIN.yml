@@ -26,6 +26,9 @@ jobs:
     steps:
       - name: Clone repo
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
     
       - name: Generate the snake files in './dist/'
         uses: Platane/snk@v3
@@ -42,11 +45,24 @@ jobs:
       - name: Show build status
         run: git status
 
-      - name: Push new files to the output branch
-        uses: crazy-max/ghaction-github-pages@v3.1.0
-        with:
-          target_branch: output
-          build_dir: dist
-          commit_message: Update snake animations
+      - name: Setup output branch
+        run: |
+          git checkout --orphan output 2>/dev/null || git checkout output
+          git reset --hard
+          git rm -rf . 2>/dev/null || true
+
+      - name: Copy generated files
+        run: |
+          cp dist/github-contribution-grid-snake.svg . 2>/dev/null || true
+          cp dist/github-contribution-grid-snake-dark.svg . 2>/dev/null || true
+          cp dist/github-contribution-grid-snake.gif . 2>/dev/null || true
+
+      - name: Commit and push to output branch
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email github-actions[bot]@users.noreply.github.com
+          git add -A
+          git commit -m "Update snake animations [skip ci]" || exit 0
+          git push origin output --force
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
