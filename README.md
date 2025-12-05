@@ -1,1 +1,0 @@
-# Snake animation output
